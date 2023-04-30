@@ -9,27 +9,33 @@ int main()
         position[2] = {0}, 
         length = 3, i, 
         behave = 'D', // 'A', 'W', 'S', 'D'
-        C, // 更新动作前的缓冲，获取输入，A, W, S, D中的一种 蛇的方向
+        memBehave, // 更新动作前的缓冲，获取输入，A, W, S, D中的一种 蛇的方向
         *p, // 临时变量
         food;
 
-    for (srand(map = calloc(size, 4)), C = map[1] = -1; C - 27; _sleep(100))
+    for (srand(map = calloc(size, 4)), memBehave = map[1] = -1; memBehave - 27; _sleep(100))
     {
         if (_kbhit()) {
-            C = _getch() & 95, 
-            C - 65 && C - 68 && C - 83 && C - 87 || (C ^ behave) & 20 ^ 4 && (behave = C);
+            memBehave = _getch() & 95, 
+            memBehave - 65 && memBehave - 68 && memBehave - 83 && memBehave - 87 || (memBehave ^ behave) & 20 ^ 4 && (behave = memBehave);
        }
         p = position + !!(behave & 2),
         *p += behave / 3 & 2, 
         *p = (--*p + mapWide) % mapWide;
 
         food = !system("cls"), 
-        *(p = map + *position + position[1] * mapWide) > 0 && (C = 27);
+        *(p = map + *position + position[1] * mapWide) > 0 && (memBehave = 27);
 
         for (; *p && (map[i = rand() % size] || (--map[i], ++length, --food)););
 
         for (i = 0, *p = length; i < size; ++i % mapWide || _cputs("|\n")) {
-            _cputs(map[i] > 0 ? map[i] -= food, "()" : map[i] ? "00" : "  ");
+            _cputs(
+                map[i] > 0 ?
+                    map[i] -= food, "()" : 
+                    map[i] ? 
+                        "00" : 
+                        "  "
+            );
         }
     }
 }
