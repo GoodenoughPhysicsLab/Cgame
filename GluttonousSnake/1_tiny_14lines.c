@@ -1,45 +1,74 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <conio.h>
+#include <Windows.h>
+#include <time.h>
+#include <signal.h>
+
+#define KB_ESC 27
+
+int upper(const int num) {
+    return num & 0b1011111;
+}
+
+void snack_exit(int sig) {
+    if (sig == SIGINT)
+        exit(0);
+}
 
 int main() 
 {
-    int mapWide = 20,
-        size = mapWide * mapWide,
-        *map,
+    signal(SIGINT, snack_exit);
+
+    const int mapWide = 20,
+              size = mapWide * mapWide;
+    
+    int *map,
         position[2] = {0}, 
-        length = 3, i, 
-        behave = 'D', // 'A', 'W', 'S', 'D'
-        memBehave, // 更新动作前的缓冲，获取输入，A, W, S, D中的一种 蛇的方向
-        *p, // 临时变量
+        length = 3,
+        i, 
+        behavior = 'D', // 'A', 'W', 'S', 'D'
+        behavior_cache, // 更新动作前的缓冲，获取输入，A, W, S, D中的一种 蛇的方向
+        *temp_ptr, // 临时变量
         food;
 
-    for (srand(map = calloc(size, 4)), memBehave = map[1] = -1; memBehave - 27; _sleep(100))
+    map = (int*)calloc(size, 4);
+    time_t t; srand((unsigned int)time(&t));
+
+    /*
+    * 'A' : 65 : 0b1'000'001
+    * 'D' : 68 : 0b1'000'100
+    * 'S' : 83 : 0b1'010'011
+    * 'W' : 87 : 0b1'010'111
+    */
+
+    for (behavior_cache = map[1] = -1; behavior_cache != KB_ESC; Sleep(100))
     {
         if (_kbhit()) {
-            memBehave = _getch() & 95, 
-            memBehave - 65 && memBehave - 68 && memBehave - 83 && memBehave - 87 || (memBehave ^ behave) & 20 ^ 4 && (behave = memBehave);
+            behavior_cache = upper(_getch());
+            if (behavior_cache == 'A' || behavior_cache == 'D' || behavior_cache == 'S' || behavior_cache == 'W') {
+                // if press 'A', you can't press 'D'; if press 'W', you can't press 'S';
+                if ((behavior_cache ^ behavior) & 0b10100 ^ 4) {
+                    behavior = behavior_cache;
+                }
+            }
        }
-        p = position + !!(behave & 2),
-        *p += behave / 3 & 2, 
-        *p = (--*p + mapWide) % mapWide;
+        temp_ptr = position + !!(behavior & 2);
+        *temp_ptr += behavior / 3 & 2;
+        *temp_ptr = (--*temp_ptr + mapWide) % mapWide;
 
-        food = !system("cls"), 
-        *(p = map + *position + position[1] * mapWide) > 0 && (memBehave = 27);
+        food = !system("cls");
+        if (*(temp_ptr = map + *position + position[1] * mapWide) > 0) {
+            behavior_cache = KB_ESC;
+        }
 
-        for (; *p && (map[i = rand() % size] || (--map[i], ++length, --food)););
+        for (; *temp_ptr && (map[i = rand() % size] || (--map[i], ++length, --food)););
 
-        for (i = 0, *p = length; i < size; ++i % mapWide || _cputs("|\n")) {
-            _cputs(
-                map[i] > 0 ?
-                    map[i] -= food, "()" : 
-                    map[i] ? 
-                        "00" : 
-                        "  "
-            );
+        for (i = 0, *temp_ptr = length; i < size; ++i % mapWide || _cputs("|\n")) {
+            _cputs(map[i] > 0 ? map[i] -= food, "()" : map[i] ? "00" : "  ");
         }
     }
 }
-
 /*
 14行贪吃蛇, 668字符, 实现了简单的功能;
 ADSW移动, 吃到食物成长, 可穿墙, 吃到自己身体或按下Esc键时游戏结束;
